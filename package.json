@@ -1,0 +1,13 @@
+{
+  "name": "proxyman-tests",
+  "version": "1.0.0",
+  "description": "Tests for ProxyMan Chrome Extension",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/e2e.test.js"
+  },
+  "devDependencies": {
+    "puppeteer": "^24.39.1",
+    "simple-socks": "github:adsr/simple-socks#23521f7"
+  }
+}

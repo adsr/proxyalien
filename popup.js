@@ -16,7 +16,7 @@ const render = () => {
   html += '<hr />'
   if (o.proxies.length > 0) {
     for (const proxy of o.proxies) {
-      html += `<li class="action ${proxyman.isFixedEnabled(proxy) ? 'current' : ''}" data-mode="${ProxyMode.FIXED_SERVERS}">${proxy.name}</li>`;
+      html += `<li class="action ${proxyman.isFixedEnabled(proxy) ? 'current' : ''}" data-mode="${ProxyMode.FIXED_SERVERS}" data-proxy-name="${proxy.name}">${proxy.name}</li>`;
     }
   } else {
     html += `<li id="no-proxies">No proxies</li>`;
