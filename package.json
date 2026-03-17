@@ -8,6 +8,6 @@
   },
   "devDependencies": {
     "puppeteer": "^24.39.1",
-    "simple-socks": "github:adsr/simple-socks#23521f7"
+    "simple-socks": "github:adsr/simple-socks#a04fdc8"
   }
 }

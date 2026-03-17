@@ -13,12 +13,12 @@ import socks         from 'simple-socks';
 await (new class {
   constructor() {
     this.config = Object.freeze({
-      WEB_SERVER_IP:      '10.0.0.1',
+      WEB_SERVER_IP:      '11.0.0.1',
       WEB_SERVER_PORT:    8080,
-      WEB_BASE_URL:       'http://10.0.0.1:8080',
-      SOCKS_SERVER1_IP:   '10.0.0.2',
+      WEB_BASE_URL:       'http://11.0.0.1:8080',
+      SOCKS_SERVER1_IP:   '11.0.0.2',
       SOCKS_SERVER1_PORT: 1080,
-      SOCKS_SERVER2_IP:   '10.0.0.3',
+      SOCKS_SERVER2_IP:   '11.0.0.3',
       SOCKS_SERVER2_PORT: 1081,
     });
     this.webServer = null;
@@ -39,15 +39,6 @@ await (new class {
       test.after(async () => await this.closeBrowser());
       test.after(async () => await this.closeServers());
       test.after(() => this.manageIps(false));
-
-      // test.after(() => {
-      //   setInterval(() => {
-      //     console.log(
-      //       `process._getActiveRequests().length=${process._getActiveHandles().length}`,
-      //       process._getActiveRequests()
-      //     );
-      //   }, 5000);
-      // });
 
       test.test('manages proxies', async () => {
         const o = await this.openOptions();
