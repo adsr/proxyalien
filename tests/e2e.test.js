@@ -40,15 +40,6 @@ await (new class {
       test.after(async () => await this.closeServers());
       test.after(() => this.manageIps(false));
 
-      // test.after(() => {
-      //   setInterval(() => {
-      //     console.log(
-      //       `process._getActiveRequests().length=${process._getActiveHandles().length}`,
-      //       process._getActiveRequests()
-      //     );
-      //   }, 5000);
-      // });
-
       test.test('manages proxies', async () => {
         const o = await this.openOptions();
         assert.ok(o);
