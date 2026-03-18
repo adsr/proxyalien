@@ -248,33 +248,61 @@ export class ProxyMan {
     this.options = new Options();
     this.proxySettings = {};
     this.pacSentinel = 'https://github.com/adsr/proxyman';
+    this.optionsListener = this.onOptionsChange.bind(this);
+    this.optionsCb = null;
+    this.proxySettingsListener = this.onProxySettingsChange.bind(this);
+    this.proxySettingsCb = null;
   }
   async loadOptions() {
     const r = await chrome.storage.sync.get(['options']);
     if (!r || typeof r.options !== 'object' || Object.keys(r.options).length <= 0) return;
-    this.options = Options.fromObject(r.options);
+    this.setOptions(r.options);
     console.log('Loaded options', this.options);
+  }
+  setOptions(o) {
+    this.options = Options.fromObject(o);
   }
   async loadProxySettings() {
     const details = await chrome.proxy.settings.get({ incognito: false });
     this.proxySettings = details.value;
     console.log('Loaded proxy settings', this.proxySettings);
   }
-  listenForProxySettings(cb) {
-    const self = this;
-    chrome.proxy.settings.onChange.addListener((details) => {
-      this.proxySettings = details.value;
-      console.log('Loaded proxy settings', this.proxySettings);
-      if (cb) cb();
-    });
+  listenForProxySettings(cb, remove) {
+    if (!remove) {
+      this.proxySettingsCb = cb;
+      chrome.proxy.settings.onChange.addListener(this.proxySettingsListener);
+    } else {
+      this.proxySettingsCb = null;
+      if (chrome.proxy.settings.onChange.hasListener(this.proxySettingsListener)) {
+        chrome.proxy.settings.onChange.removeListener(this.proxySettingsListener);
+      }
+    }
   }
-  listenForOptions(cb) {
-    chrome.storage.onChanged.addListener((changes, area) => {
-      if (area !== 'sync' || !changes?.options?.newValue) return;
-      this.options = Options.fromObject(changes.options.newValue);
-      console.log('Loaded options', this.options);
-      if (cb) cb();
-    });
+  listenForOptions(cb, remove) {
+    if (!remove) {
+      this.optionsCb = cb;
+      chrome.storage.onChanged.addListener(this.optionsListener);
+    } else {
+      this.optionsCb = null;
+      if (chrome.storage.onChanged.hasListener(this.optionsListener)) {
+        chrome.storage.onChanged.removeListener(this.optionsListener);
+      }
+    }
+  }
+  onProxySettingsChange(details) {
+    this.proxySettings = details.value;
+    if (this.proxySettingsCb) this.proxySettingsCb();
+    console.log('Loaded proxy settings', this.proxySettings);
+  }
+  onOptionsChange(changes, area) {
+    if (area !== 'sync' || !changes?.options?.newValue) return;
+    this.options = Options.fromObject(changes.options.newValue);
+    if (this.optionsCb) this.optionsCb();
+    console.log('Loaded options', this.options);
+  }
+  destroy() {
+    this.listenForProxySettings(null, true);
+    this.listenForOptions(null, true);
   }
   async saveOptions() {
     const saveObj = this.options.toObject();

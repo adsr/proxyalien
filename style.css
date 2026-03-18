@@ -72,6 +72,14 @@ tr.invalid {
   background-color: salmon;
 }
 
+#cfg-payload.invalid {
+  background-color: salmon;
+}
+
+#cfg-payload.valid {
+  background-color: lime;
+}
+
 th {
     text-align: left;
     font-weight: normal;

@@ -231,6 +231,32 @@ await (new class {
         assert.deepStrictEqual(actualConfig, expectedConfig);
       });
 
+      test.test('exports and imports config', async () => {
+        const o = await this.openOptions();
+        assert.ok(o);
+
+        // Export
+        await o.click('button.cfg-export');
+        await o.waitForFunction(selector => document.querySelector('#cfg-payload').value !== '');
+        const payload = await o.evaluate(() => document.querySelector('#cfg-payload').value);
+        const config1 = await this.getStoredConfig();
+        assert.ok(config1, 'stored config should exist');
+
+        // Mutate and save
+        await this.setBadgeDefault(o, 'direct', 'bogus', 'bogus', 'bogus');
+        await this.saveBadgeDefaults(o);
+        const config2 = await this.getStoredConfig();
+        assert.notDeepStrictEqual(config1, config2, 'stored config should be different now');
+
+        // Import
+        await o.evaluate(p => document.querySelector('#cfg-payload').value = p, payload);
+        await o.click('button.cfg-import');
+        const config3 = await this.getStoredConfig();
+        assert.deepStrictEqual(config1, config3, 'stored config should match original');
+
+        await o.close();
+      });
+
       test.test('supports fixed_servers', async () => {
         const popup = await this.openPopup();
         assert.ok(popup);
