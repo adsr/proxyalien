@@ -286,6 +286,26 @@ await (new class {
 
         await popup.close();
       });
+
+      test.test('renders badges', async () => {
+        const popup = await this.openPopup();
+        assert.ok(popup);
+
+        for (const [actionFn, expectedBadgeText] of [
+          [ async () => await this.setProxyMode(popup, 'unmanaged'), 'unm' ],
+          [ async () => await this.setFixedProxy(popup, 'proxy2'),   'p2'  ],
+          [ async () => await this.setProxyMode(popup, 'direct'),    'dir' ],
+        ]) {
+          const badgeEvPromise = this.getNextBadgeEvent(1000);
+          await actionFn();
+          const badgeEv = await badgeEvPromise;
+
+          assert.ok(badgeEv);
+          assert.equal(badgeEv.text, expectedBadgeText);
+        }
+
+        await popup.close();
+      });
     });
   }
   async addProxy(o, name, badge, fg, bg, host, port) {
@@ -443,6 +463,21 @@ await (new class {
         });
       });
     });
+  }
+  getNextBadgeEvent(timeoutMs) {
+    const badgePromise = this.worker.evaluate(() => {
+      return new Promise(resolve => {
+        const listener = e => {
+          self.removeEventListener('badge', listener);
+          resolve(e.detail);
+        };
+        self.addEventListener('badge', listener);
+      });
+    });
+    const timeoutPromise = new Promise(resolve => {
+      setTimeout(() => resolve(null), timeoutMs);
+    });
+    return Promise.race([badgePromise, timeoutPromise]);
   }
   async openOptions() {
     await this.worker.evaluate('chrome.runtime.openOptionsPage();');

@@ -21,6 +21,10 @@ const init = async () => {
     if (badgeConf.fg) chrome.action.setBadgeTextColor({ color: badgeConf.fg });
     if (badgeConf.bg) chrome.action.setBadgeBackgroundColor({ color: badgeConf.bg });
 
+    self.dispatchEvent(new CustomEvent('badge', {
+      detail: badgeConf.toObject()
+    }));
+
     console.log('Set badge', badgeConf);
   };
 
