@@ -1,8 +1,8 @@
 {
-  "name": "ProxyMan",
+  "name": "ProxyAlien",
   "description": "No-nonsense proxy manager and switcher",
-  "version": "1.1.0",
-  "homepage_url": "https://github.com/adsr/proxyman",
+  "version": "1.2.0",
+  "homepage_url": "https://github.com/adsr/proxyalien",
   "manifest_version": 3,
   "action": {
     "default_popup": "popup.html"

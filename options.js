@@ -289,7 +289,7 @@ class OptionsPage {
 
         await this.init();
 
-        alert('Import success');
+        alert('Import successful');
         return;
       } catch (e) {
         break;
