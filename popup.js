@@ -1,12 +1,12 @@
-import {ProxyMan, ProxyMode} from './proxyman.js';
+import {ProxyAlien, ProxyMode} from './proxyalien.js';
 
 const render = () => {
-  const o = proxyman.options;
-  const actualMode = proxyman.proxySettings?.mode;
+  const o = proxyalien.options;
+  const actualMode = proxyalien.proxySettings?.mode;
 
-  const isFixedForeign = proxyman.isFixedForeign();
-  const isPacForeign = proxyman.isPacForeign();
-  const isForeign = proxyman.isProxyForeign();
+  const isFixedForeign = proxyalien.isFixedForeign();
+  const isPacForeign = proxyalien.isPacForeign();
+  const isForeign = proxyalien.isProxyForeign();
 
   // Render markup
   let html = '';
@@ -16,7 +16,7 @@ const render = () => {
   html += '<hr />'
   if (o.proxies.length > 0) {
     for (const proxy of o.proxies) {
-      html += `<li class="action ${proxyman.isFixedEnabled(proxy) ? 'current' : ''}" data-mode="${ProxyMode.FIXED_SERVERS}" data-proxy-name="${proxy.name}">${proxy.name}</li>`;
+      html += `<li class="action ${proxyalien.isFixedEnabled(proxy) ? 'current' : ''}" data-mode="${ProxyMode.FIXED_SERVERS}" data-proxy-name="${proxy.name}">${proxy.name}</li>`;
     }
   } else {
     html += `<li id="no-proxies">No proxies</li>`;
@@ -54,14 +54,14 @@ const render = () => {
 
       // Set mode
       const mode = li.dataset?.mode;
-      proxyman.options.setMode(
+      proxyalien.options.setMode(
         mode,
         mode === ProxyMode.FIXED_SERVERS ? fixedServerName : null
       );
 
       // Save options and configure proxy settings
-      await proxyman.saveOptions();
-      await proxyman.configureProxy();
+      await proxyalien.saveOptions();
+      await proxyalien.configureProxy();
 
       // Re-render
       render();
@@ -69,10 +69,10 @@ const render = () => {
   });
 };
 
-const proxyman = new ProxyMan();
-await proxyman.loadOptions();
-await proxyman.loadProxySettings();
-proxyman.listenForProxySettings(render);
-proxyman.listenForOptions(render);
+const proxyalien = new ProxyAlien();
+await proxyalien.loadOptions();
+await proxyalien.loadProxySettings();
+proxyalien.listenForProxySettings(render);
+proxyalien.listenForOptions(render);
 
 render();

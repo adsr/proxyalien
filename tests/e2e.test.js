@@ -32,7 +32,7 @@ await (new class {
     this.socksConns = [];
   }
   async run() {
-    test.suite('ProxyMan', () => {
+    test.suite('ProxyAlien', () => {
       test.before(() => this.manageIps(true));
       test.before(async () => await this.startServers());
       test.before(async () => await this.startBrowser());

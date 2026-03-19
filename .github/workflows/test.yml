@@ -1,4 +1,4 @@
-name: proxyman_test
+name: proxyalien_test
 on:
   push:
     branches: [ master ]

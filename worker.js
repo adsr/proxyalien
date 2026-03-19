@@ -1,17 +1,17 @@
-import { ProxyMan, ProxyMode, BadgeConfig } from './proxyman.js';
+import { ProxyAlien, ProxyMode, BadgeConfig } from './proxyalien.js';
 
-const proxyman = new ProxyMan();
+const proxyalien = new ProxyAlien();
 
 const init = async () => {
   const setBadge = () => {
-    const actualMode = proxyman.proxySettings.mode;
-    const fixedProxy = proxyman.getEnabledFixedProxy();
-    const unmanaged = proxyman.options.badgeConfs[ProxyMode.UNMANAGED];
+    const actualMode = proxyalien.proxySettings.mode;
+    const fixedProxy = proxyalien.getEnabledFixedProxy();
+    const unmanaged = proxyalien.options.badgeConfs[ProxyMode.UNMANAGED];
     const badgeConf = fixedProxy?.badgeConf
-        || proxyman.options.badgeConfs[actualMode]
+        || proxyalien.options.badgeConfs[actualMode]
         || unmanaged; // possible if out-of-sync and in FIXED_SERVERS mode
 
-    if (proxyman.isUnmanagedOrOutOfSync(actualMode)) {
+    if (proxyalien.isUnmanagedOrOutOfSync(actualMode)) {
       badgeConf.setText(unmanaged.text || badgeConf.text);
       badgeConf.setFg(unmanaged.fg);
       badgeConf.setBg(unmanaged.bg);
@@ -38,13 +38,13 @@ const init = async () => {
     debounceTimer = setTimeout(setBadge, debounceMs);
   };
 
-  await proxyman.loadOptions();
-  await proxyman.loadProxySettings();
+  await proxyalien.loadOptions();
+  await proxyalien.loadProxySettings();
 
   setBadge();
 
-  proxyman.listenForOptions(debounceSetBadge);
-  proxyman.listenForProxySettings(debounceSetBadge);
+  proxyalien.listenForOptions(debounceSetBadge);
+  proxyalien.listenForProxySettings(debounceSetBadge);
 };
 
 chrome.runtime.onStartup.addListener(init);

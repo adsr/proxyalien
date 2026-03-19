@@ -136,10 +136,10 @@ export class Rule {
   setProxyName(v) {
     this.proxyName = toString(v);
   }
-  isValid(proxyman) {
+  isValid(proxyalien) {
     return this.pattern.length >= 1
       && (this.proxyName === ProxyMode.DIRECT
-      || proxyman.getProxyByName(this.proxyName));
+      || proxyalien.getProxyByName(this.proxyName));
   }
   clone() {
     return this.constructor.fromObject(this);
@@ -243,11 +243,11 @@ export class Options {
   }
 }
 
-export class ProxyMan {
+export class ProxyAlien {
   constructor() {
     this.options = new Options();
     this.proxySettings = {};
-    this.pacSentinel = 'https://github.com/adsr/proxyman';
+    this.pacSentinel = 'https://github.com/adsr/proxyalien';
     this.optionsListener = this.onOptionsChange.bind(this);
     this.optionsCb = null;
     this.proxySettingsListener = this.onProxySettingsChange.bind(this);

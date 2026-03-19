@@ -1,6 +1,6 @@
 import {
   ProxyConfig,
-  ProxyMan,
+  ProxyAlien,
   ProxyMode,
   ProxyModeLabels,
   ProxyScheme,
@@ -8,21 +8,21 @@ import {
   RuleSubject,
   RuleType,
 }
-from './proxyman.js';
+from './proxyalien.js';
 
 class OptionsPage {
   constructor() {
-    this.proxyman = null;
+    this.proxyalien = null;
     this.proxies = [];
     this.autoRules = [];
     this.autoDefault = null;
     this.badgeConfs = {};
   }
   async init() {
-    if (this.proxyman) this.proxyman.destroy();
-    this.proxyman = new ProxyMan();
-    await this.proxyman.loadOptions();
-    this.proxyman.listenForOptions(null);
+    if (this.proxyalien) this.proxyalien.destroy();
+    this.proxyalien = new ProxyAlien();
+    await this.proxyalien.loadOptions();
+    this.proxyalien.listenForOptions(null);
     this.revertProxies(true);
     this.revertRules(true);
     this.revertBadgeConfs(true);
@@ -36,16 +36,16 @@ class OptionsPage {
     this.hookInputs();
   }
   revertProxies(skipRender) {
-    this.proxies = this.proxyman.options.proxies.map((p) => p.clone());
+    this.proxies = this.proxyalien.options.proxies.map((p) => p.clone());
     if (!skipRender) this.render();
   }
   revertRules(skipRender) {
-    this.autoRules = this.proxyman.options.autoRules.map((r) => r.clone());
-    this.autoDefault = this.proxyman.options.autoDefault || ProxyMode.DIRECT;
+    this.autoRules = this.proxyalien.options.autoRules.map((r) => r.clone());
+    this.autoDefault = this.proxyalien.options.autoDefault || ProxyMode.DIRECT;
     if (!skipRender) this.render();
   }
   revertBadgeConfs(skipRender) {
-    const badgeConfs = this.proxyman.options.badgeConfs;
+    const badgeConfs = this.proxyalien.options.badgeConfs;
     this.badgeConfs = Object.fromEntries(
       Object.keys(badgeConfs).map(
         (badgeType) => [badgeType, badgeConfs[badgeType].clone()]
@@ -54,14 +54,14 @@ class OptionsPage {
     if (!skipRender) this.render();
   }
   areRulesModified() {
-    return JSON.stringify(this.autoRules) !== JSON.stringify(this.proxyman.options.autoRules)
-      || this.autoDefault !== this.proxyman.options.autoDefault;
+    return JSON.stringify(this.autoRules) !== JSON.stringify(this.proxyalien.options.autoRules)
+      || this.autoDefault !== this.proxyalien.options.autoDefault;
   }
   areProxiesModified() {
-    return JSON.stringify(this.proxies) !== JSON.stringify(this.proxyman.options.proxies);
+    return JSON.stringify(this.proxies) !== JSON.stringify(this.proxyalien.options.proxies);
   }
   areBadgeConfsModified() {
-    return JSON.stringify(this.badgeConfs) !== JSON.stringify(this.proxyman.options.badgeConfs);
+    return JSON.stringify(this.badgeConfs) !== JSON.stringify(this.proxyalien.options.badgeConfs);
   }
   addProxy() {
     this.proxies.push(new ProxyConfig());
@@ -90,14 +90,14 @@ class OptionsPage {
   validateRules() {
     let valid = true;
     for (const [index, rule] of this.autoRules.entries()) {
-      if (!rule.isValid(this.proxyman)) {
+      if (!rule.isValid(this.proxyalien)) {
         const tr = document.querySelector(`tr.autoRules[data-index="${index}"]`);
         if (tr) tr.classList.add('invalid');
         valid = false;
       }
     }
     if (!(this.autoDefault === ProxyMode.DIRECT
-        || this.proxyman.getProxyByName(this.autoDefault)
+        || this.proxyalien.getProxyByName(this.autoDefault)
     )) {
       const tr = document.querySelector(`tr.auto-default`);
       if (tr) tr.classList.add('invalid')
@@ -107,26 +107,26 @@ class OptionsPage {
   }
   async saveProxies() {
     if (!this.validateProxies()) return;
-    this.proxyman.options.proxies = this.proxies.map((p) => p.clone());
-    await this.proxyman.saveOptions();
-    await this.proxyman.configureProxy();
+    this.proxyalien.options.proxies = this.proxies.map((p) => p.clone());
+    await this.proxyalien.saveOptions();
+    await this.proxyalien.configureProxy();
     this.render();
   }
   async saveRules() {
     if (!this.validateRules()) return;
-    this.proxyman.options.autoRules = this.autoRules.map((r) => r.clone());
-    this.proxyman.options.autoDefault = this.autoDefault;
-    await this.proxyman.saveOptions();
-    await this.proxyman.configureProxy();
+    this.proxyalien.options.autoRules = this.autoRules.map((r) => r.clone());
+    this.proxyalien.options.autoDefault = this.autoDefault;
+    await this.proxyalien.saveOptions();
+    await this.proxyalien.configureProxy();
     this.render();
   }
   async saveBadgeConfs() {
-    this.proxyman.options.badgeConfs = Object.fromEntries(
-      Object.keys(this.proxyman.options.badgeConfs).map(
+    this.proxyalien.options.badgeConfs = Object.fromEntries(
+      Object.keys(this.proxyalien.options.badgeConfs).map(
         (badgeType) => [badgeType, this.badgeConfs[badgeType].clone()]
       )
     );
-    await this.proxyman.saveOptions();
+    await this.proxyalien.saveOptions();
     this.render();
   }
   deleteProxy(index) {
@@ -209,7 +209,7 @@ class OptionsPage {
       html += '</select></td>';
       html += `<td><select class="rule-proxy" data-index=${index}>`;
       html += `<option ${rule.proxyName === 'direct' ? 'selected' : ''}>direct</option>`;
-      for (const proxy of this.proxyman.options.proxies) {
+      for (const proxy of this.proxyalien.options.proxies) {
         html += `<option ${rule.proxyName === proxy.name ? 'selected' : ''}>${proxy.name}</option>`;
       }
       html += '</select></td>';
@@ -222,7 +222,7 @@ class OptionsPage {
     html += '<td colspan=3>Default</td>';
     html += '<td colspan=2><select class="rule-auto-default">';
     html += `<option ${this.autoDefault === 'direct' ? 'selected' : ''}>direct</option>`;
-    for (const proxy of this.proxyman.options.proxies) {
+    for (const proxy of this.proxyalien.options.proxies) {
       html += `<option ${this.autoDefault === proxy.name ? 'selected' : ''}>${proxy.name}</option>`;
     }
     html += '</select></td>';
@@ -271,7 +271,7 @@ class OptionsPage {
   }
   exportConfig() {
     const payload = document.querySelector('#cfg-payload');
-    payload.value = btoa(JSON.stringify(this.proxyman.options.toObject()));
+    payload.value = btoa(JSON.stringify(this.proxyalien.options.toObject()));
   }
   async importConfig() {
     const payload = document.querySelector('#cfg-payload');
@@ -284,8 +284,8 @@ class OptionsPage {
         const optionsObj = JSON.parse(optionsJson);
         if (!optionsObj) break;
 
-        this.proxyman.setOptions(optionsObj);
-        await this.proxyman.saveOptions();
+        this.proxyalien.setOptions(optionsObj);
+        await this.proxyalien.saveOptions();
 
         await this.init();
 
