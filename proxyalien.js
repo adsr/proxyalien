@@ -248,10 +248,9 @@ export class ProxyAlien {
     this.options = new Options();
     this.proxySettings = {};
     this.pacSentinel = 'https://github.com/adsr/proxyalien';
-    this.optionsListener = this.onOptionsChange.bind(this);
-    this.optionsCb = null;
-    this.proxySettingsListener = this.onProxySettingsChange.bind(this);
-    this.proxySettingsCb = null;
+  }
+  async load() {
+    await Promise.all([this.loadOptions(), this.loadProxySettings()]);
   }
   async loadOptions() {
     const r = await chrome.storage.sync.get(['options']);
@@ -259,60 +258,25 @@ export class ProxyAlien {
     this.setOptions(r.options);
     console.log('Loaded options', this.options);
   }
-  setOptions(o) {
-    this.options = Options.fromObject(o);
-  }
   async loadProxySettings() {
     const details = await chrome.proxy.settings.get({ incognito: false });
     this.proxySettings = details.value;
     console.log('Loaded proxy settings', this.proxySettings);
   }
-  listenForProxySettings(cb, remove) {
-    if (!remove) {
-      this.proxySettingsCb = cb;
-      chrome.proxy.settings.onChange.addListener(this.proxySettingsListener);
-    } else {
-      this.proxySettingsCb = null;
-      if (chrome.proxy.settings.onChange.hasListener(this.proxySettingsListener)) {
-        chrome.proxy.settings.onChange.removeListener(this.proxySettingsListener);
-      }
-    }
-  }
-  listenForOptions(cb, remove) {
-    if (!remove) {
-      this.optionsCb = cb;
-      chrome.storage.onChanged.addListener(this.optionsListener);
-    } else {
-      this.optionsCb = null;
-      if (chrome.storage.onChanged.hasListener(this.optionsListener)) {
-        chrome.storage.onChanged.removeListener(this.optionsListener);
-      }
-    }
-  }
-  onProxySettingsChange(details) {
-    this.proxySettings = details.value;
-    if (this.proxySettingsCb) this.proxySettingsCb();
-    console.log('Loaded proxy settings', this.proxySettings);
-  }
-  onOptionsChange(changes, area) {
-    if (area !== 'sync' || !changes?.options?.newValue) return;
-    this.options = Options.fromObject(changes.options.newValue);
-    if (this.optionsCb) this.optionsCb();
-    console.log('Loaded options', this.options);
-  }
-  destroy() {
-    this.listenForProxySettings(null, true);
-    this.listenForOptions(null, true);
+  setOptions(o) {
+    this.options = Options.fromObject(o);
   }
   async saveOptions() {
     const saveObj = this.options.toObject();
     await chrome.storage.sync.set({ options: saveObj });
+    chrome.runtime.sendMessage({ type: 'updateBadge' });
     console.log('Saved options', saveObj);
   }
   async configureProxy() {
     const settings = {};
     const o = this.options;
     const mode = o.mode;
+    console.log('configureProxy options', o);
     switch (mode) {
       case ProxyMode.DIRECT:
       case ProxyMode.AUTO_DETECT:
@@ -335,6 +299,7 @@ export class ProxyAlien {
         return;
     }
     await chrome.proxy.settings.set({ value: settings, scope: 'regular' });
+    chrome.runtime.sendMessage({ type: 'updateBadge' });
     console.log('Set proxy settings', settings);
     await this.loadProxySettings();
   }
@@ -393,6 +358,27 @@ export class ProxyAlien {
     console.log(code);
     return code;
   }
+  setBadge() {
+    const actualMode = this.proxySettings.mode;
+    const fixedProxy = this.getEnabledFixedProxy();
+    const unmanaged = this.options.badgeConfs[ProxyMode.UNMANAGED];
+    const badgeConf = fixedProxy?.badgeConf
+        || this.options.badgeConfs[actualMode]
+        || unmanaged; // possible if out-of-sync and in FIXED_SERVERS mode
+
+    if (this.isUnmanagedOrOutOfSync(actualMode)) {
+      badgeConf.setText(unmanaged.text || badgeConf.text);
+      badgeConf.setFg(unmanaged.fg);
+      badgeConf.setBg(unmanaged.bg);
+    }
+
+    chrome.action.setBadgeText({ text: badgeConf.text });
+    if (badgeConf.fg) chrome.action.setBadgeTextColor({ color: badgeConf.fg });
+    if (badgeConf.bg) chrome.action.setBadgeBackgroundColor({ color: badgeConf.bg });
+
+    console.log('Set badge', badgeConf);
+    return badgeConf;
+  }
   getProxyByName(name) {
     for (const proxy of (this.options?.proxies || [])) {
       if (proxy.name === name) {
@@ -439,6 +425,14 @@ export class ProxyAlien {
     return actualMode !== this.options.mode || this.isProxyForeign();
   }
 }
+
+export const Debounce = (fn, millis) => {
+  let timer = null;
+  return () => {
+    clearTimeout(timer);
+    timer = setTimeout(fn, millis);
+  };
+};
 
 const toEnum = (ec, value) => {
   for (const v of Object.values(ec)) {

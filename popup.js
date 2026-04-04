@@ -1,4 +1,6 @@
-import {ProxyAlien, ProxyMode} from './proxyalien.js';
+import { ProxyAlien, ProxyMode, Debounce } from './proxyalien.js';
+
+const proxyalien = new ProxyAlien();
 
 const render = () => {
   const o = proxyalien.options;
@@ -69,10 +71,17 @@ const render = () => {
   });
 };
 
-const proxyalien = new ProxyAlien();
-await proxyalien.loadOptions();
-await proxyalien.loadProxySettings();
-proxyalien.listenForProxySettings(render);
-proxyalien.listenForOptions(render);
+await proxyalien.load();
 
 render();
+
+const debouncedRender = Debounce(render, 32);
+
+chrome.proxy.settings.onChange.addListener((details) => {
+  debouncedRender();
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync' || !changes?.options?.newValue) return;
+  debouncedRender();
+})

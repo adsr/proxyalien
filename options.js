@@ -19,10 +19,8 @@ class OptionsPage {
     this.badgeConfs = {};
   }
   async init() {
-    if (this.proxyalien) this.proxyalien.destroy();
-    this.proxyalien = new ProxyAlien();
-    await this.proxyalien.loadOptions();
-    this.proxyalien.listenForOptions(null);
+    if (!this.proxyalien) this.proxyalien = new ProxyAlien();
+    await this.proxyalien.load();
     this.revertProxies(true);
     this.revertRules(true);
     this.revertBadgeConfs(true);
@@ -174,7 +172,7 @@ class OptionsPage {
       }
       html += '</select></td>';
       html += `<td><input class="proxy-host" type="text" value="${proxy.server.host}" data-index=${index}></td>`;
-      html += `<td><input class="proxy-port" type="text" value="${proxy.server.port || ''}" data-index=${index}></td>`;
+      html += `<td><input class="proxy-port" type="text" value="${proxy.server.port || ''}" data-index=${index} size=5></td>`;
       html += `<td><button class="proxy-delete" data-index=${index}>Delete</button></td>`;
       html += '</tr>';
     }
@@ -360,8 +358,14 @@ class OptionsPage {
   }
 }
 
+const page = new OptionsPage();
+page.hookRegexTest();
+
 (async () => {
-  const page = new OptionsPage();
-  page.hookRegexTest();
   await page.init();
 })();
+
+chrome.storage.onChanged.addListener(async (changes, area) => {
+  if (area !== 'sync' || !changes?.options?.newValue) return;
+  await page.init();
+})

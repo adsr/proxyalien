@@ -1,7 +1,7 @@
 {
   "name": "ProxyAlien",
   "description": "No-nonsense proxy manager and switcher",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "homepage_url": "https://github.com/adsr/proxyalien",
   "manifest_version": 3,
   "action": {

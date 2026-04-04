@@ -1,51 +1,27 @@
-import { ProxyAlien, ProxyMode, BadgeConfig } from './proxyalien.js';
+import { ProxyAlien, Debounce } from './proxyalien.js';
 
-const proxyalien = new ProxyAlien();
-
-const init = async () => {
-  const setBadge = () => {
-    const actualMode = proxyalien.proxySettings.mode;
-    const fixedProxy = proxyalien.getEnabledFixedProxy();
-    const unmanaged = proxyalien.options.badgeConfs[ProxyMode.UNMANAGED];
-    const badgeConf = fixedProxy?.badgeConf
-        || proxyalien.options.badgeConfs[actualMode]
-        || unmanaged; // possible if out-of-sync and in FIXED_SERVERS mode
-
-    if (proxyalien.isUnmanagedOrOutOfSync(actualMode)) {
-      badgeConf.setText(unmanaged.text || badgeConf.text);
-      badgeConf.setFg(unmanaged.fg);
-      badgeConf.setBg(unmanaged.bg);
-    }
-
-    chrome.action.setBadgeText({ text: badgeConf.text });
-    if (badgeConf.fg) chrome.action.setBadgeTextColor({ color: badgeConf.fg });
-    if (badgeConf.bg) chrome.action.setBadgeBackgroundColor({ color: badgeConf.bg });
-
-    self.dispatchEvent(new CustomEvent('badge', {
-      detail: badgeConf.toObject()
-    }));
-
-    console.log('Set badge', badgeConf);
-  };
-
-  // We receive callbacks on both options changes and proxy
-  // changes, often back to back. To avoid flicker of double
-  // rendering, debounce for a short while.
-  const debounceMs = 32;
-  let debounceTimer = null;
-  const debounceSetBadge = () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(setBadge, debounceMs);
-  };
-
-  await proxyalien.loadOptions();
-  await proxyalien.loadProxySettings();
-
-  setBadge();
-
-  proxyalien.listenForOptions(debounceSetBadge);
-  proxyalien.listenForProxySettings(debounceSetBadge);
+const setBadge = async () => {
+  const proxyalien = new ProxyAlien();
+  await proxyalien.load();
+  const badgeConf = proxyalien.setBadge();
+  self.dispatchEvent(new CustomEvent('badge', {
+    detail: badgeConf.toObject()
+  }));
 };
 
-chrome.runtime.onStartup.addListener(init);
-chrome.runtime.onInstalled.addListener(init);
+const debouncedSetBadge = Debounce(setBadge, 32);
+
+chrome.proxy.settings.onChange.addListener(debouncedSetBadge);
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== 'sync' || !changes?.options?.newValue) return;
+  debouncedSetBadge();
+})
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type !== 'updateBadge') return;
+  debouncedSetBadge();
+});
+
+chrome.runtime.onStartup.addListener(debouncedSetBadge);
+chrome.runtime.onInstalled.addListener(debouncedSetBadge);
